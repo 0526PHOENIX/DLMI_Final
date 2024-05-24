@@ -166,38 +166,27 @@ Unet
 """
 class Unet(nn.Module):
 
-    def __init__(self):
+    def __init__(self, depth = 5, bottle = 9):
 
         super().__init__()
 
+        self.depth = depth
+        self.bottle = bottle
+
         # Number of Filters
-        self.filters = [16, 32, 64, 128, 256]
+        self.filters = [pow(2, i + 4) for i in range(depth)]
 
         # Initialization
         self.init = Init(self.filters[0])
 
         # Downsampling
-        self.down_1 = Down(self.filters[1])
-        self.down_2 = Down(self.filters[2])
-        self.down_3 = Down(self.filters[3])
-        self.down_4 = Down(self.filters[4])
+        self.down = nn.Sequential(*[Down(filters) for filters in self.filters[1 : ]])
 
         # Bottleneck
-        self.mid_1 = Mid(self.filters[4])
-        self.mid_2 = Mid(self.filters[4])
-        self.mid_3 = Mid(self.filters[4])
-        self.mid_4 = Mid(self.filters[4])
-        self.mid_5 = Mid(self.filters[4])
-        self.mid_6 = Mid(self.filters[4])
-        self.mid_7 = Mid(self.filters[4])
-        self.mid_8 = Mid(self.filters[4])
-        self.mid_9 = Mid(self.filters[4])
+        self.mid = nn.Sequential(*[Mid(self.filters[-1]) for _ in range(self.bottle)])
         
         # Upsampling
-        self.up_4 = Up(self.filters[3])
-        self.up_3 = Up(self.filters[2])
-        self.up_2 = Up(self.filters[1])
-        self.up_1 = Up(self.filters[0])
+        self.up = nn.Sequential(*[Up(filters) for filters in self.filters[-2 :  : -1]])
 
         # Ouput
         self.final = Final(self.filters[0])
@@ -207,51 +196,39 @@ class Unet(nn.Module):
         # Initialization
         init = self.init(img_in)
 
+        # Block Length
+        self.len = self.depth - 1
+
         # Downsampling
-        down_1 = self.down_1(init)
-        down_2 = self.down_2(down_1)
-        down_3 = self.down_3(down_2)
-        down_4 = self.down_4(down_3)
+        down = []
+        for i in range(self.len):
+            if i == 0:
+                down.append(self.down[i](init))
+            else:
+                down.append(self.down[i](down[i - 1]))
 
         # Bottleneck
-        mid = self.mid_1(down_4)
-        mid = self.mid_2(mid)
-        mid = self.mid_3(mid)
-        mid = self.mid_4(mid)
-        mid = self.mid_5(mid)
-        mid = self.mid_6(mid)
-        mid = self.mid_7(mid)
-        mid = self.mid_8(mid)
-        mid = self.mid_9(mid)
+        mid = []
+        for i in range(self.bottle):
+            if i == 0:
+                mid.append(self.mid[i](down[-1]))
+            else:
+                mid.append(self.mid[i](mid[i - 1]))
 
         # Upsampling
-        up_4 = self.up_4(mid, down_3)
-        up_3 = self.up_3(up_4, down_2)
-        up_2 = self.up_2(up_3, down_1)
-        up_1 = self.up_1(up_2, init)
+        up = []
+        for i in range(self.len):
+            if i == 0:
+                up.append(self.up[i](mid[-1], down[self.len - i - 2]))
+            elif i == self.len - 1:
+                up.append(self.up[i](up[i - 1], init))
+            else:
+                up.append(self.up[i](up[i - 1], down[self.len - i - 2]))
 
         # Ouput
-        img_out = self.final(up_1)
+        img_out = self.final(up[-1])
 
         return img_out
-
-
-"""
-====================================================================================================
-Pretrained Unet
-====================================================================================================
-"""
-def Pretrain():
-
-    model = torch.hub.load('milesial/Pytorch-UNet', 'unet_carvana', pretrained = True, scale = 0.5, verbose = False)
-    
-    in_filters = model.inc.double_conv[3].out_channels
-    model.inc = Init(in_filters)
-
-    out_filters = model.outc.conv.in_channels
-    model.outc = Final(out_filters)
-
-    return model
 
 
 """
@@ -264,8 +241,5 @@ if __name__ == '__main__':
     device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
     print('Training on: ' + str(device) + '\n')
     
-    # model_1 = Unet().to(device = device)
-    # print(summary(model_1, input_size = (1, 256, 256), batch_size = 2))
-
-    model_2 = Pretrain().to(device = device)
-    print(summary(model_2, input_size = (1, 192, 192), batch_size = 2))
+    model = Unet().to(device = device)
+    print(summary(model, input_size = (1, 256, 256), batch_size = 2))

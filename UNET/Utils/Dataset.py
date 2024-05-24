@@ -11,7 +11,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import torch
+from torch import Tensor
 from torch.utils.data import Dataset
+from torchvision import transforms
+from torchvision.transforms import functional as TF
 
 
 """
@@ -21,7 +24,18 @@ Dataset
 """
 class Data(Dataset):
 
-    def __init__(self, root = "", mode = ""):
+    """
+    ================================================================================================
+    Data Path & Load Data
+    ================================================================================================
+    """
+    def __init__(self, root: str = "", mode: str = "", augment: bool = False) -> None:
+
+        if mode not in ['Train', 'Val', 'Test']:
+            raise ValueError('Invalid Mode. Mode Must Be "Train" or "Val" or "Test"')
+
+        # Data Augmentation
+        self.augment = augment
 
         # Filepath
         self.root = root
@@ -45,11 +59,21 @@ class Data(Dataset):
         if self.images.shape != self.labels.shape:
             raise ValueError('Unequal Amount of Images and Labels.')
 
-    def __len__(self):
+    """
+    ================================================================================================
+    Number of Data
+    ================================================================================================
+    """
+    def __len__(self) -> int:
         
         return self.images.shape[0]
 
-    def __getitem__(self, index):
+    """
+    ================================================================================================
+    Get Data
+    ================================================================================================
+    """
+    def __getitem__(self, index: int) -> Tensor:
 
         # Load MR Data: (1, 256, 256)
         image = self.images[index : index + 1, :, :]
@@ -59,6 +83,34 @@ class Data(Dataset):
 
         # Load TG Data: (1, 256, 256)
         mask = self.masks[index : index + 1, :, :]
+
+        if self.augment:
+            return self.augmentation(image, label, mask)
+        else:
+            return (image, label, mask)
+    
+    """
+    ================================================================================================
+    Data Augmentation
+    ================================================================================================
+    """
+    def augmentation(self, image: Tensor, label: Tensor, mask: Tensor) -> Tensor:
+
+        if random.random() > 0.5:
+
+            image = TF.hflip(image)
+            label = TF.hflip(label)
+            mask = TF.hflip(mask)
+        
+        params = transforms.RandomAffine.get_params(degrees = [-3.5, 3.5],
+                                                    translate = None,
+                                                    scale_ranges = [0.7, 1.3],
+                                                    shears = [0.97, 1.03],
+                                                    img_size = [192, 192])
+
+        image = TF.affine(image, *params, fill = 0)
+        label = TF.affine(label, *params, fill = 0)
+        mask = TF.affine(mask, *params, fill = 0)
 
         return (image, label, mask)
     
