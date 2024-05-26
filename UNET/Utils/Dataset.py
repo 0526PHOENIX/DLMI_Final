@@ -6,6 +6,7 @@ Package
 import os
 import random
 import numpy as np
+import nibabel as nib
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -39,20 +40,20 @@ class Data(Dataset):
 
         # Filepath
         self.root = root
-        self.images_path = os.path.join(self.root, mode, 'MR.npy')
-        self.labels_path = os.path.join(self.root, mode, 'CT.npy')
-        self.masks_path = os.path.join(self.root, mode, 'TG.npy')
+        self.images_path = os.path.join(self.root, mode, 'MR.nii')
+        self.labels_path = os.path.join(self.root, mode, 'CT.nii')
+        self.masks_path = os.path.join(self.root, mode, 'TG.nii')
 
-        # Load MR Data: (570, 256, 256)
-        self.images = np.load(self.images_path).astype('float32')
+        # Load MR Data
+        self.images = nib.load(self.images_path).get_fdata().astype('float32')
         self.images = torch.from_numpy(self.images)
 
-        # Load CT Data: (570, 256, 256)
-        self.labels = np.load(self.labels_path).astype('float32')
+        # Load CT Data
+        self.labels = nib.load(self.labels_path).get_fdata().astype('float32')
         self.labels = torch.from_numpy(self.labels)
 
-        # Load TG Data: (570, 256, 256)
-        self.masks = np.load(self.masks_path).astype('bool')
+        # Load TG Data
+        self.masks = nib.load(self.masks_path).get_fdata().astype('bool')
         self.masks = torch.from_numpy(self.masks)
 
         # Check Data Quantity

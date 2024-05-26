@@ -18,12 +18,7 @@ Global Constant
 ====================================================================================================
 """
 RAW = ""
-
 DATA = ""
-
-NII = ""
-
-PATH_LIST = [DATA, NII]
 
 
 """
@@ -41,22 +36,18 @@ class Preprocess():
     def __init__(self, filepath = RAW):
 
         # Check the Path
-        for dir in PATH_LIST:
-            if not os.path.exists(dir):
-                os.makedirs(dir)
+        if not os.path.exists(DATA):
+            os.makedirs(DATA)
         
         # Load Raw Data
         self.images = np.load(os.path.join(filepath, 'MR.npy')).astype('float32')
         self.labels = np.load(os.path.join(filepath, 'CT.npy')).astype('float32')
-
-        self.target = np.load(os.path.join(DATA, 'TG.npy')).astype('float32')
 
         # Check File Number
         if self.images.shape[0] != self.labels.shape[0]:
             raise ValueError('\n', 'Unequal Amount of images and labels.', '\n')
         
         self.len = self.images.shape[0]
-
 
     """
     ================================================================================================
@@ -75,8 +66,8 @@ class Preprocess():
             label = self.labels[i]
 
             # Rotate
-            # image = np.rot90(image)
-            # label = np.rot90(label)
+            image = np.rot90(image)
+            label = np.rot90(label)
 
             # Thresholding
             binary = (image > 0.0625)
@@ -106,15 +97,22 @@ class Preprocess():
             buffer_ct.append(label)
             buffer_tg.append(mask)
 
-        # Get CT Series from Stack
+        # Get Series from Stack
         result_mr = np.stack(buffer_mr, axis = 0)
         result_ct = np.stack(buffer_ct, axis = 0)
         result_tg = np.stack(buffer_tg, axis = 0)
 
-        # Save Numpy Data
-        np.save(os.path.join(DATA, 'MR.npy'), result_mr)
-        np.save(os.path.join(DATA, 'CT.npy'), result_ct)
-        np.save(os.path.join(DATA, 'TG.npy'), result_tg)
+        # Save MR
+        result_mr = nib.Nifti1Image(result_mr, np.eye(4))
+        nib.save(result_mr, os.path.join(DATA, 'MR.nii'))
+
+        # Save CT
+        result_ct = nib.Nifti1Image(result_ct, np.eye(4))
+        nib.save(result_ct, os.path.join(DATA, 'CT.nii'))
+
+        # Save Head Region
+        result_tg = nib.Nifti1Image(result_tg, np.eye(4))
+        nib.save(result_tg, os.path.join(DATA, 'TG.nii'))
 
         # Check Progress
         print()
@@ -131,56 +129,25 @@ class Preprocess():
     """
     def check(self):
 
-        for i in range(self.len):
+        image = self.images
+        label = self.labels
 
-            image = self.images[i]
-            label = self.labels[i]
+        plt.subplot(1, 2, 1)
+        plt.imshow(image, cmap = 'gray')
+        plt.subplot(1, 2, 2)
+        plt.imshow(label, cmap = 'gray')
+        plt.show()
 
-            plt.subplot(1, 2, 1)
-            plt.imshow(image, cmap = 'gray')
-            plt.subplot(1, 2, 2)
-            plt.imshow(label, cmap = 'gray')
-            plt.show()
-
-            space = "{: <15.2f}\t{: <15.2f}"
-            print(i + 1, 'MR:', image.shape)
-            # print(space.format(image.max(), image.min()))
-            # print(space.format(image.mean(), image.std()))
-            print()
-            print(i + 1, 'CT:', label.shape)
-            # print(space.format(label.max(), label.min()))
-            # print(space.format(label.mean(), label.std()))
-            print()
-            print('===============================================================================')
-
-        return
-
-    """
-    ================================================================================================
-    Convert .npy to .nii
-    ================================================================================================
-    """
-    def npy2nii(self):
-
-        # Save MR
-        images = nib.Nifti1Image(self.images, np.eye(4))
-        nib.save(images, os.path.join(NII, 'MR.nii'))
-
-        # Save CT
-        labels = (self.labels * 4000) - 1000
-
-        labels = nib.Nifti1Image(labels, np.eye(4))
-        nib.save(labels, os.path.join(NII, 'CT.nii'))
-
-        # Save Head Region
-        target = nib.Nifti1Image(self.target, np.eye(4))
-        nib.save(target, os.path.join(NII, 'TG.nii'))
-
-        # Check Progress
+        space = "{: <15.2f}\t{: <15.2f}"
+        print('MR:', image.shape)
+        print(space.format(image.max(), image.min()))
+        print(space.format(image.mean(), image.std()))
         print()
-        print('Done')
+        print('CT:', label.shape)
+        print(space.format(label.max(), label.min()))
+        print(space.format(label.mean(), label.std()))
         print()
-        print('===================================================================================')
+        print('===============================================================================')
 
         return
     
@@ -192,11 +159,8 @@ Main Function
 """
 if __name__ == '__main__':
     
-    # pre = Preprocess(RAW)
-    # pre.main()
+    pre = Preprocess(RAW)
+    pre.main()
 
     pre = Preprocess(DATA)
-    pre.npy2nii()
-
-    # pre = Preprocess(DATA)
-    # pre.check()
+    pre.check()
