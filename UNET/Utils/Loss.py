@@ -7,7 +7,6 @@ import torch
 from torch import Tensor
 from torch.nn import MSELoss, L1Loss
 from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
-from torchmetrics.classification import Dice
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -104,8 +103,8 @@ Main Function
 """
 if __name__ == '__main__':
 
-    image = torch.rand((16, 1, 192, 192))
-    label = torch.rand((16, 1, 192, 192))
+    image = torch.rand((16, 1, 256, 256))
+    label = torch.rand((16, 1, 256, 256))
 
     pix = Loss.get_pix_loss(image, label)
     print(pix)

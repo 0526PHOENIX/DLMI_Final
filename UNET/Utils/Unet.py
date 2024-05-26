@@ -5,15 +5,16 @@ Package
 """
 import torch
 import torch.nn as nn
+from torchvision.transforms import Resize
 from torchsummary import summary
 
 
 """
 ====================================================================================================
-Residual Block
+Residual Block 2D
 ====================================================================================================
 """
-class Res(nn.Module):
+class Res2d(nn.Module):
 
     def __init__(self, filters):
 
@@ -37,10 +38,10 @@ class Res(nn.Module):
 
 """
 ====================================================================================================
-Initialization Block
+Initialization Block 2D
 ====================================================================================================
 """
-class Init(nn.Module):
+class Init2d(nn.Module):
 
     def __init__(self, filters):
 
@@ -49,7 +50,7 @@ class Init(nn.Module):
         # Convolution -> Dropout -> Residual Block
         self.conv = nn.Conv2d(1, filters, kernel_size = 3, padding = 1, bias = False)
         self.drop = nn.Dropout2d(0.2)
-        self.res = Res(filters)
+        self.res = Res2d(filters)
 
     def forward(self, img_in):
 
@@ -62,10 +63,10 @@ class Init(nn.Module):
 
 """
 ====================================================================================================
-Downsampling Block
+Downsampling Block 2D
 ====================================================================================================
 """
-class Down(nn.Module):
+class Down2d(nn.Module):
 
     def __init__(self, filters):
 
@@ -73,11 +74,14 @@ class Down(nn.Module):
 
         # Downsampling -> Residual Block
         self.down = nn.Conv2d(filters // 2, filters, kernel_size = 3, stride = 2, padding = 1, bias = False)
-        self.res = Res(filters)
+        self.res = Res2d(filters)
 
-    def forward(self, img_in):
+    def forward(self, img_in_1, img_in_2):
 
-        img_out = self.down(img_in)
+        img_out = self.down(img_in_1)
+
+        # Jump Connection
+        img_out += Resize((img_out.shape[2], img_out.shape[3]))(img_in_2)
         img_out = self.res(img_out)
 
         return img_out
@@ -85,10 +89,10 @@ class Down(nn.Module):
 
 """
 ====================================================================================================
-Middle Block
+Middle Block 2D
 ====================================================================================================
 """
-class Mid(nn.Module):
+class Mid2d(nn.Module):
 
     def __init__(self, filters):
 
@@ -112,10 +116,10 @@ class Mid(nn.Module):
 
 """
 ====================================================================================================
-Upsampling Block
+Upsampling Block 2D
 ====================================================================================================
 """
-class Up(nn.Module):
+class Up2d(nn.Module):
 
     def __init__(self, filters):
 
@@ -124,15 +128,16 @@ class Up(nn.Module):
         # Convolution -> Upsampling -> Residual Block
         self.conv = nn.Conv2d(filters * 2, filters, kernel_size = 1, padding = 0, bias = False)
         self.up = nn.ConvTranspose2d(filters, filters, kernel_size = 2, stride = 2, bias = False)
-        self.res = Res(filters)
+        self.res = Res2d(filters)
     
-    def forward(self, img_in_1, img_in_2):
+    def forward(self, img_in_1, img_in_2, img_in_3):
 
         img_out = self.conv(img_in_1)
         img_out = self.up(img_out)
 
         # Jump Connection
-        img_out += img_in_2
+        img_out += Resize((img_out.shape[2], img_out.shape[3]))(img_in_2)
+        img_out += img_in_3
         img_out = self.res(img_out)
 
         return img_out
@@ -140,10 +145,10 @@ class Up(nn.Module):
 
 """
 ====================================================================================================
-Final Block
+Final Block 2D
 ====================================================================================================
 """
-class Final(nn.Module):
+class Final2d(nn.Module):
 
     def __init__(self, filters):
 
@@ -161,10 +166,10 @@ class Final(nn.Module):
 
 """
 ====================================================================================================
-Unet
+Unet 2D
 ====================================================================================================
 """
-class Unet(nn.Module):
+class Unet2d(nn.Module):
 
     def __init__(self, depth = 5, bottle = 9):
 
@@ -177,53 +182,67 @@ class Unet(nn.Module):
         self.filters = [pow(2, i + 4) for i in range(depth)]
 
         # Initialization
-        self.init = Init(self.filters[0])
+        self.init = Init2d(self.filters[0])
 
         # Downsampling
-        self.down = nn.Sequential(*[Down(filters) for filters in self.filters[1 : ]])
+        self.down = nn.Sequential(*[Down2d(filters) for filters in self.filters[1 : ]])
 
         # Bottleneck
-        self.mid = nn.Sequential(*[Mid(self.filters[-1]) for _ in range(self.bottle)])
+        self.mid = nn.Sequential(*[Mid2d(self.filters[-1]) for _ in range(self.bottle)])
         
         # Upsampling
-        self.up = nn.Sequential(*[Up(filters) for filters in self.filters[-2 :  : -1]])
+        self.up = nn.Sequential(*[Up2d(filters) for filters in self.filters[-2 :  : -1]])
 
         # Ouput
-        self.final = Final(self.filters[0])
+        self.final = Final2d(self.filters[0])
     
     def forward(self, img_in):
         
         # Initialization
         init = self.init(img_in)
 
-        # Block Length
         self.len = self.depth - 1
 
         # Downsampling
         down = []
         for i in range(self.len):
+
             if i == 0:
-                down.append(self.down[i](init))
+
+                down.append(self.down[i](init, img_in))
+
             else:
-                down.append(self.down[i](down[i - 1]))
+
+                down.append(self.down[i](down[i - 1], img_in))
 
         # Bottleneck
+
         mid = []
         for i in range(self.bottle):
+
             if i == 0:
+
                 mid.append(self.mid[i](down[-1]))
+            
             else:
+
                 mid.append(self.mid[i](mid[i - 1]))
 
         # Upsampling
         up = []
         for i in range(self.len):
+
             if i == 0:
-                up.append(self.up[i](mid[-1], down[self.len - i - 2]))
+
+                up.append(self.up[i](mid[-1], img_in, down[self.len - i - 2]))
+
             elif i == self.len - 1:
-                up.append(self.up[i](up[i - 1], init))
+
+                up.append(self.up[i](up[i - 1], img_in, init))
+
             else:
-                up.append(self.up[i](up[i - 1], down[self.len - i - 2]))
+
+                up.append(self.up[i](up[i - 1], img_in, down[self.len - i - 2]))
 
         # Ouput
         img_out = self.final(up[-1])
@@ -239,7 +258,7 @@ Main Function
 if __name__ == '__main__':
 
     device = (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
-    print('Training on: ' + str(device) + '\n')
+    print('\n' + 'Training on: ' + str(device) + '\n')
     
-    model = Unet().to(device = device)
-    print(summary(model, input_size = (1, 256, 256), batch_size = 2))
+    model_1 = Unet2d(depth = 5, bottle = 9).to(device = device)
+    print(summary(model_1, input_size = (1, 256, 256), batch_size = 6))
