@@ -123,23 +123,21 @@ Main Function
 """
 if __name__ == '__main__':
 
-    filepath = ""
+    filepath = "C:/Users/PHOENIX/Desktop/DLMI/Data"
 
-    train = Data(filepath, 'Train')
-    val = Data(filepath, 'Val')
-    test = Data(filepath, 'Test')
+    data = Data(filepath, 'Test')
 
-    for i in range(5):
+    for i in range(3):
 
-        index = random.randint(0, len(train) - 1)
+        index = random.randint(0, len(data) - 1)
 
-        image, label, mask = train[index]
+        image, label, _ = data[index]
         
         print()
-        print('image:')
+        print('image:', image.shape)
         print(image.min(), image.max())
         print(image.mean(), image.std())
-        print('label:')
+        print('label:', label.shape)
         print(label.min(), label.max())
         print(label.mean(), label.std())
         print()

@@ -17,8 +17,8 @@ import nibabel as nib
 Global Constant
 ====================================================================================================
 """
-RAW = ""
-DATA = ""
+RAW = "C:/Users/PHOENIX/Desktop/DLMI/Data_Raw/Train"
+DATA = "C:/Users/PHOENIX/Desktop/DLMI/Data/Train"
 
 
 """
@@ -33,15 +33,22 @@ class Preprocess():
     Critical Parameters
     ================================================================================================
     """
-    def __init__(self, filepath = RAW):
+    def __init__(self, filepath: str = RAW) -> None:
+
+        if filepath not in [RAW, DATA]:
+            raise ValueError('Invalid Filepath')
 
         # Check the Path
         if not os.path.exists(DATA):
             os.makedirs(DATA)
         
         # Load Raw Data
-        self.images = np.load(os.path.join(filepath, 'MR.npy')).astype('float32')
-        self.labels = np.load(os.path.join(filepath, 'CT.npy')).astype('float32')
+        if filepath == RAW:
+            self.images = np.load(os.path.join(filepath, 'MR.npy')).astype('float32')
+            self.labels = np.load(os.path.join(filepath, 'CT.npy')).astype('float32')
+        else:
+            self.images = nib.load(os.path.join(filepath, 'MR.nii')).get_fdata().astype('float32')
+            self.labels = nib.load(os.path.join(filepath, 'CT.nii')).get_fdata().astype('float32')
 
         # Check File Number
         if self.images.shape[0] != self.labels.shape[0]:
@@ -49,12 +56,14 @@ class Preprocess():
         
         self.len = self.images.shape[0]
 
+        return
+
     """
     ================================================================================================
     Main Process: Remove Background
     ================================================================================================
     """
-    def main(self):
+    def main(self) -> None:
 
         buffer_mr = []
         buffer_ct = []
@@ -127,24 +136,22 @@ class Preprocess():
     Check Statistics
     ================================================================================================
     """
-    def check(self):
+    def check(self) -> None:
 
         image = self.images
         label = self.labels
 
-        plt.subplot(1, 2, 1)
-        plt.imshow(image, cmap = 'gray')
-        plt.subplot(1, 2, 2)
-        plt.imshow(label, cmap = 'gray')
-        plt.show()
+        # plt.subplot(1, 2, 1)
+        # plt.imshow(image[0], cmap = 'gray')
+        # plt.subplot(1, 2, 2)
+        # plt.imshow(label[0], cmap = 'gray')
+        # plt.show()
 
-        space = "{: <15.2f}\t{: <15.2f}"
+        space = "{: <5.2f}\t{: <5.2f}"
         print('MR:', image.shape)
-        print(space.format(image.max(), image.min()))
         print(space.format(image.mean(), image.std()))
         print()
         print('CT:', label.shape)
-        print(space.format(label.max(), label.min()))
         print(space.format(label.mean(), label.std()))
         print()
         print('===============================================================================')
@@ -159,8 +166,8 @@ Main Function
 """
 if __name__ == '__main__':
     
-    pre = Preprocess(RAW)
-    pre.main()
+    # pre = Preprocess(RAW)
+    # pre.main()
 
     pre = Preprocess(DATA)
     pre.check()
