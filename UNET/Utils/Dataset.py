@@ -123,7 +123,7 @@ Main Function
 """
 if __name__ == '__main__':
 
-    filepath = "C:/Users/PHOENIX/Desktop/DLMI/Data"
+    filepath = ""
 
     data = Data(filepath, 'Test')
 

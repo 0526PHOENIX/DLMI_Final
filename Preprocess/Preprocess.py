@@ -17,8 +17,8 @@ import nibabel as nib
 Global Constant
 ====================================================================================================
 """
-RAW = "C:/Users/PHOENIX/Desktop/DLMI/Data_Raw/Train"
-DATA = "C:/Users/PHOENIX/Desktop/DLMI/Data/Train"
+RAW = ""
+DATA = ""
 
 
 """
@@ -141,11 +141,11 @@ class Preprocess():
         image = self.images
         label = self.labels
 
-        # plt.subplot(1, 2, 1)
-        # plt.imshow(image[0], cmap = 'gray')
-        # plt.subplot(1, 2, 2)
-        # plt.imshow(label[0], cmap = 'gray')
-        # plt.show()
+        plt.subplot(1, 2, 1)
+        plt.imshow(image[0], cmap = 'gray')
+        plt.subplot(1, 2, 2)
+        plt.imshow(label[0], cmap = 'gray')
+        plt.show()
 
         space = "{: <5.2f}\t{: <5.2f}"
         print('MR:', image.shape)
@@ -166,8 +166,8 @@ Main Function
 """
 if __name__ == '__main__':
     
-    # pre = Preprocess(RAW)
-    # pre.main()
+    pre = Preprocess(RAW)
+    pre.main()
 
     pre = Preprocess(DATA)
     pre.check()

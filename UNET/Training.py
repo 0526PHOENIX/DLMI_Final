@@ -59,8 +59,8 @@ class Training():
                  bottle: int = 9,
                  augment: bool = False,
                  loss: list[int] = [10, 3, 5],
-                 data: str = "/home/ccy/Pretrain",
-                 result: str = "/home/ccy/Pretrain/Test/Result",
+                 data: str = "",
+                 result: str = "",
                  weight: str = "",
                  *args,
                  **kwargs) -> None:
@@ -134,10 +134,8 @@ class Training():
         self.val_writer = SummaryWriter(log_dir + '/Val')
 
         # Save Model Architecture
-        dummy = torch.randn(1, 7, 192, 192).to(device = self.device)
-
+        dummy = torch.randn(1, 1, 256, 256).to(device = self.device)
         self.train_writer.add_graph(self.model, dummy)
-        self.val_writer.add_graph(self.model, dummy)
 
         return
 
@@ -148,7 +146,7 @@ class Training():
     """
     def init_dl(self) -> None:
 
-        root = os.path.join(self.data, 'Data_2D')
+        root = os.path.join(self.data, 'Data')
 
         # Training Dataset
         train_ds = Data(root = root, mode = 'Train', augment = self.augment)
@@ -173,7 +171,7 @@ class Training():
     Load Model Parameter and Hyperparameter
     ================================================================================================
     """
-    def load_model(self) -> None:
+    def load_model(self) -> float:
 
         # Check Filepath
         if os.path.isfile(self.weight):
@@ -203,9 +201,9 @@ class Training():
             # Begin Point
             if checkpoint['epoch'] < self.epoch:
                 self.begin = checkpoint['epoch'] + 1
+                print('\n' + 'Continued From Epoch: ' + str(self.begin))
             else:
-                self.begin = 1
-            print('\n' + 'Start From Epoch: ' + str(self.begin))
+                raise ValueError('Invalid Epoch Number, Would Destroy Saved Training Curve')
 
             return checkpoint['score']
         
@@ -283,7 +281,7 @@ class Training():
             self.scheduler.step(score)
 
             # Adaptive Loss Function Weight
-            if epoch_index % 1000 == 0:
+            if epoch_index % 2000 == 0:
                 self.lambda_1 *= 1.5
                 self.lambda_2 *= 1.0
                 self.lambda_3 *= 0.5
@@ -384,13 +382,11 @@ class Training():
             # Total Loss
             loss = (self.lambda_1*loss_pix) + (self.lambda_2*loss_gdl) + (self.lambda_3*loss_sim)
 
-            # Fresh Optimizer's Gradient
-            self.opt.zero_grad()
-
             # Gradient Descent
             if mode == 'train':
 
                 # Update Generator's Parameters
+                self.opt.zero_grad()
                 loss.backward()
                 self.opt.step()
 
@@ -536,9 +532,9 @@ class Training():
             fake2_g = self.model(real1_g)
 
             # Torch Tensor to Numpy Array
-            real1_a = real1_g.to('cpu').detach().numpy()[:, 3, :, :]
-            real2_a = real2_g.to('cpu').detach().numpy()[0, :, :, :]
-            fake2_a = fake2_g.to('cpu').detach().numpy()[0, :, :, :]
+            real1_a = real1_g.to('cpu').detach().numpy()[0]
+            real2_a = real2_g.to('cpu').detach().numpy()[0]
+            fake2_a = fake2_g.to('cpu').detach().numpy()[0]
             mask_a = mask_t.numpy()
 
             # Linear Sacling to [0, 1]

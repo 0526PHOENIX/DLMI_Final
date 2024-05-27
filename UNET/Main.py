@@ -20,13 +20,13 @@ if __name__ == '__main__':
 
     # Critical Info
     train = True
-    time = ""
+    time = "2024-05-27_23-35"
 
     # Filepath
-    data = ""
-    result = ""
-    eva = ""
-    weight = os.path.join("", time + '.pt')
+    data = "C:/Users/user/Desktop/DLMI"
+    result = "C:/Users/user/Desktop/DLMI/UNET/Result"
+    eva = "C:/Users/user/Desktop/DLMI/UNET/Evaluate"
+    weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.pt')
 
     if train: 
 
