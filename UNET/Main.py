@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     # Critical Info
     train = True
-    time = "2024-05-27_23-35"
+    time = "2024-05-28_16-19"
 
     # Filepath
     data = "C:/Users/user/Desktop/DLMI"
@@ -36,7 +36,7 @@ if __name__ == '__main__':
                   'lr': 1e-6,
                   'augment': True,
                   'depth': 5,
-                  'bottle': 12,
+                  'bottle': 9,
                   'loss': [10, 3, 5],
                   'data': data,
                   'result': result}
