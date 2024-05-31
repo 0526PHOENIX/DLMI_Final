@@ -84,6 +84,7 @@ class Evaluate():
         log_dir = os.path.join(self.eva, self.time)
 
         # Tensorboard Writer
+        self.train_writer = SummaryWriter(log_dir + '/Train')
         self.val_writer = SummaryWriter(log_dir + '/Val')
         self.test_writer = SummaryWriter(log_dir + '/Test')
 
@@ -95,6 +96,11 @@ class Evaluate():
     ================================================================================================
     """
     def init_dl(self) -> None:
+
+        # Training 
+        train_ds = Data(root = self.data, mode = 'Val')
+        self.train_dl = DataLoader(train_ds, batch_size = 64, shuffle = True, drop_last = False,
+                                   num_workers = 4, pin_memory = True)
 
         # Validation
         val_ds = Data(root = self.data, mode = 'Val')
@@ -152,13 +158,19 @@ class Evaluate():
         # Get Checkpoint
         self.load_model()
 
-        # Validate Model
+        # Training
+        print('\n' + 'Training: ')
+        metrics_train = self.evaluation('train')
+        self.print_result(metrics_train)
+        self.save_images('train')
+
+        # Validation
         print('\n' + 'Validation: ')
         metrics_val = self.evaluation('val')
         self.print_result(metrics_val)
         self.save_images('val')
 
-        # Evaluate Model
+        # Evaluation
         print('\n' + 'Testing: ')
         metrics_test = self.evaluation('test')
         self.print_result(metrics_test)

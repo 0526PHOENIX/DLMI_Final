@@ -19,7 +19,7 @@ Main Function
 if __name__ == '__main__':
 
     # Critical Info
-    train = True
+    train = False
     time = "2024-05-31_19-59"
 
     # Filepath
@@ -80,3 +80,4 @@ if __name__ == '__main__':
             # Evaluation
             evaluation = Evaluate(**params, weight = weight)
             evaluation.main()
+            print('===============================================================================')
