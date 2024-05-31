@@ -55,7 +55,7 @@ class Loss():
     """
     def get_sim_loss(predicts: Tensor, labels: Tensor) -> Tensor:
 
-        return 1 - StructuralSimilarityIndexMeasure().to(DEVICE)(predicts, labels)
+        return 1 - StructuralSimilarityIndexMeasure(kernel_size = 5).to(DEVICE)(predicts, labels)
 
     """
     ====================================================================================================
@@ -93,7 +93,7 @@ class Loss():
     """
     def get_ssim(predicts: Tensor, labels: Tensor) -> float:
 
-        return StructuralSimilarityIndexMeasure().to(DEVICE)(predicts, labels).item()
+        return StructuralSimilarityIndexMeasure(kernel_size = 5).to(DEVICE)(predicts, labels).item()
 
 
 """

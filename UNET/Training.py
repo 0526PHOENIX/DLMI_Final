@@ -58,9 +58,9 @@ class Training():
                  depth: int = 5,
                  bottle: int = 9,
                  augment: bool = False,
-                 loss: list[int] = [10, 3, 5],
-                 data: str = "",
-                 result: str = "",
+                 loss: list[int] = [10, 7, 5],
+                 data: str = "C:/Users/user/Desktop/DLMI/Data",
+                 result: str = "C:/Users/user/Desktop/DLMI/UNET/Result",
                  weight: str = "",
                  *args,
                  **kwargs) -> None:
@@ -146,15 +146,13 @@ class Training():
     """
     def init_dl(self) -> None:
 
-        root = os.path.join(self.data, 'Data')
-
         # Training Dataset
-        train_ds = Data(root = root, mode = 'Train', augment = self.augment)
+        train_ds = Data(root = self.data, mode = 'Train', augment = self.augment)
         self.train_dl = DataLoader(train_ds, batch_size = self.batch, shuffle = True, drop_last = False,
                                    num_workers = 4, pin_memory = True)
 
         # Validation Dataset
-        val_ds = Data(root = root, mode = 'Val', augment = False)
+        val_ds = Data(root = self.data, mode = 'Val', augment = False)
         self.val_dl = DataLoader(val_ds, batch_size = self.batch, shuffle = True, drop_last = False,
                                  num_workers = 4, pin_memory = True)
 
@@ -281,9 +279,12 @@ class Training():
             self.scheduler.step(score)
 
             # Adaptive Loss Function Weight
-            if epoch_index % 2000 == 0:
+            if epoch_index % 1000 == 0:
+                # PIX Loss
                 self.lambda_1 *= 1.5
-                self.lambda_2 *= 1.0
+                # GDL Loss
+                self.lambda_2 *= 1.75
+                # SIM Loss
                 self.lambda_3 *= 0.5
             
         # Close Tensorboard Writer

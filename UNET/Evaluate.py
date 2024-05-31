@@ -48,8 +48,8 @@ class Evaluate():
     def __init__(self,
                  depth: int = 5,
                  bottle: int = 9,
-                 data: str = "",
-                 eva: str = "",
+                 data: str = "C:/Users/user/Desktop/DLMI/Data",
+                 eva: str = "C:/Users/user/Desktop/DLMI/UNET/Evaluate",
                  weight: str = "",
                  *args,
                  **kwargs) -> None:
@@ -96,15 +96,13 @@ class Evaluate():
     """
     def init_dl(self) -> None:
 
-        root = os.path.join(self.data, 'Data')
-
         # Validation
-        val_ds = Data(root = root, mode = 'Val')
+        val_ds = Data(root = self.data, mode = 'Val')
         self.val_dl = DataLoader(val_ds, batch_size = 64, shuffle = True, drop_last = False,
                                  num_workers = 4, pin_memory = True)
 
         # Testing
-        test_ds = Data(root = root, mode = 'Test')
+        test_ds = Data(root = self.data, mode = 'Test')
         self.test_dl = DataLoader(test_ds, batch_size = 64, shuffle = True, drop_last = False,
                                   num_workers = 4, pin_memory = True)
         
@@ -296,7 +294,7 @@ class Evaluate():
 
                 # Get MT and rCT
                 # real1: MR; real2: rCT; mask: Head Region
-                (real1_t, real2_t, mask_t) = self.val_dl.dataset[index]
+                (real1_t, real2_t, mask_t) = dl.dataset[index]
                 real1_g = real1_t.to(self.device).unsqueeze(0)
                 real2_g = real2_t.to(self.device).unsqueeze(0)
 
@@ -332,7 +330,7 @@ class Evaluate():
                 # Remove Background
                 fake2_a = np.where(mask_a, fake2_a, 0)
 
-                # Save Image
+                # Save Image to Tensorboard
                 writer.add_image(self.time + '/' + str(i + 1) + 'MR', real1_a, dataformats = 'CHW')
                 writer.add_image(self.time + '/' + str(i + 1) + 'rCT', real2_a, dataformats = 'CHW')
                 writer.add_image(self.time + '/' + str(i + 1) + 'sCT', fake2_a, dataformats = 'CHW')
@@ -357,7 +355,7 @@ class Evaluate():
                 plt.imshow(diff, cmap = colormap, vmin = 0, vmax = 2000, aspect = 'equal')
                 plt.colorbar()
 
-                # Save Image
+                # Save Image to Tensorboard
                 writer.add_figure(self.time + '/' + str(i + 1) + 'Diff', fig)
 
                 # Refresh Tensorboard Writer

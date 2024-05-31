@@ -20,37 +20,63 @@ if __name__ == '__main__':
 
     # Critical Info
     train = True
-    time = "2024-05-28_16-19"
+    time = "2024-05-31_19-59"
 
     # Filepath
-    data = "C:/Users/user/Desktop/DLMI"
-    result = "C:/Users/user/Desktop/DLMI/UNET/Result"
-    eva = "C:/Users/user/Desktop/DLMI/UNET/Evaluate"
     weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.pt')
 
     if train: 
 
-        # Training
+        """
+        ============================================================================================
+        Training
+        ============================================================================================
+        """
+        # Model Weight Path
+        weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.pt')
+
+        # Parameter
         params = {'epoch': 4000,
                   'batch': 8,
                   'lr': 1e-6,
                   'augment': True,
                   'depth': 5,
                   'bottle': 9,
-                  'loss': [10, 3, 5],
-                  'data': data,
-                  'result': result}
-                        
+                  'loss': [5, 7, 1]}
+        
+        # Training
         training = Training(**params, weight = weight)
         training.main()
     
     else:
 
-        # Evaluation
-        params = {'depth': 5,
-                  'bottle': 12,
-                  'data': data,
-                  'eva': eva}
-        
-        evaluation = Evaluate(**params, weight = weight)
-        evaluation.main()
+        """
+        ============================================================================================
+        Evaluation
+        ============================================================================================
+        """
+        # Training Timestamp
+        times = os.listdir("C:/Users/user/Desktop/DLMI/UNET/Result/Metrics")
+
+        for time in times:
+
+            # Model Depth and Bottleneck Length
+            with open(os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Metrics", time, 'Hyper.txt')) as f:
+
+                for line in f.readlines():
+
+                    if 'Model Depth' in line:
+                        depth = int(line.split(':')[1].strip())
+                    elif 'Bottleneck Length' in line:
+                        bottleneck = int(line.split(':')[1].strip())
+
+            # Model Weight Path
+            weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.best.pt')
+
+            # Parameter
+            params = {'depth': depth,
+                      'bottle': bottleneck}
+            
+            # Evaluation
+            evaluation = Evaluate(**params, weight = weight)
+            evaluation.main()
