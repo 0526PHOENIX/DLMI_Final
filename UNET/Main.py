@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     # Critical Info
     train = False
-    time = "2024-05-31_19-59"
+    time = ""
 
     # Filepath
     weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.pt')
