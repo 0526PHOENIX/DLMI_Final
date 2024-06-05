@@ -48,8 +48,8 @@ class Evaluate():
     def __init__(self,
                  depth: int = 5,
                  bottle: int = 9,
-                 data: str = "C:/Users/user/Desktop/DLMI/Data",
-                 eva: str = "C:/Users/user/Desktop/DLMI/UNET/Evaluate",
+                 data: str = "",
+                 eva: str = "",
                  weight: str = "",
                  *args,
                  **kwargs) -> None:

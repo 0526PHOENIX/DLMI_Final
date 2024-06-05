@@ -59,8 +59,8 @@ class Training():
                  bottle: int = 9,
                  augment: bool = False,
                  loss: list[int] = [10, 7, 5],
-                 data: str = "C:/Users/user/Desktop/DLMI/Data",
-                 result: str = "C:/Users/user/Desktop/DLMI/UNET/Result",
+                 data: str = "",
+                 result: str = "",
                  weight: str = "",
                  *args,
                  **kwargs) -> None:

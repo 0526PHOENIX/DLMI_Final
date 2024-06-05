@@ -19,11 +19,11 @@ Main Function
 if __name__ == '__main__':
 
     # Critical Info
-    train = False
+    train = True
     time = ""
 
     # Filepath
-    weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.pt')
+    weight = os.path.join("", time + '.pt')
 
     if train: 
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         ============================================================================================
         """
         # Model Weight Path
-        weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.pt')
+        weight = os.path.join("", time + '.pt')
 
         # Parameter
         params = {'epoch': 4000,
@@ -56,12 +56,12 @@ if __name__ == '__main__':
         ============================================================================================
         """
         # Training Timestamp
-        times = os.listdir("C:/Users/user/Desktop/DLMI/UNET/Result/Metrics")
+        times = os.listdir("")
 
         for time in times:
 
             # Model Depth and Bottleneck Length
-            with open(os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Metrics", time, 'Hyper.txt')) as f:
+            with open(os.path.join("", time, 'Hyper.txt')) as f:
 
                 for line in f.readlines():
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
                         bottleneck = int(line.split(':')[1].strip())
 
             # Model Weight Path
-            weight = os.path.join("C:/Users/user/Desktop/DLMI/UNET/Result/Model", time + '.best.pt')
+            weight = os.path.join("", time + '.best.pt')
 
             # Parameter
             params = {'depth': depth,
